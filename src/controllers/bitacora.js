@@ -31,52 +31,74 @@ export const httpBitacora = {
             res.status(500).json({ msg: 'Error al crear la bitácora' });
         }
     },
-    actualizarEstadoBitacora: async (req, res) => {
-        try {
-            const { id } = req.params; // ID de la bitácora
-            const { estado } = req.body; // Nuevo estado
 
-            // Verificar que el estado es válido
-            const estadosValidos = ['pendiente', 'aceptado', 'rechazado', 'con excusa'];
-            if (!estadosValidos.includes(estado)) {
-                return res.status(400).json({ message: 'Estado inválido' });
-            }
-
-            const bitacora = await Bitacora.findByIdAndUpdate(
-                id,
-                { estado },
-                { new: true } // Para devolver el documento actualizado
-            );
-
-            if (!bitacora) {
-                return res.status(404).json({ message: 'Bitácora no encontrada' });
-            }
-
-            res.status(200).json(bitacora);
-        } catch (error) {
-            res.status(500).json({ message: 'Error al actualizar el estado', error });
-        }
-    },
     listarBitacoras: async (req, res) => {
         try {
             // Filtrar bitácoras donde Aprendiz no sea null y hacer populate de Aprendiz
-            const bitacoras = await Bitacora.find({ Aprendiz: { $ne: null } }).populate('Aprendiz');
+            const bitacoras = await Bitacora.find({ Aprendiz: { $ne: null } }).populate({
+                path: 'Aprendiz',
+                populate: {
+                    path: 'idFicha', 
+                }
+            });
             res.json(bitacoras);
         } catch (error) {
             console.error(error);
             res.status(500).json({ msg: 'Error al listar las bitácoras', error });
         }
     },
-
-
-    listarBitacorasPorFecha: async (req, res) => {
+   
+    listarBitacorasPorFichaFecha: async (req, res) => {
         try {
-            const bitacoras = await Bitacora.find({ fecha: { $gte: req.params.fechaInicio, $lte: req.params.fechaFin } });
+            const fechaInicio = new Date(req.params.fecha);
+            const fechaFin = new Date(req.params.fecha);
+            fechaFin.setHours(23, 59, 59, 999); // Fin del día
+    
+            // Buscamos las bitácoras por ficha y por fecha
+            const bitacoras = await Bitacora.find({
+                'Aprendiz.idFicha': req.params.ficha, // Filtrar por ficha
+                fecha: { $gte: fechaInicio, $lte: fechaFin } // Filtrar por una fecha específica
+            }).populate({
+                path: 'Aprendiz',
+                populate: {
+                    path: 'idFicha', 
+                }
+            });
+    
             res.status(200).json(bitacoras);
         } catch (error) {
             res.status(500).json({ message: error.message });
         }
     },
+    
+
+    
+
+    listarBitacorasPorFecha: async (req, res) => {
+        try {
+            const { fechaInicio, fechaFin } = req.params;
+    
+            // Convertir los parámetros a objetos Date
+            const fechaInicioDate = new Date(fechaInicio);
+            const fechaFinDate = new Date(fechaFin);
+    
+            // Validar que las fechas son válidas
+            if (isNaN(fechaInicioDate.getTime()) || isNaN(fechaFinDate.getTime())) {
+                return res.status(400).json({ message: 'Formato de fecha no válido' });
+            }
+    
+            // Buscar bitácoras dentro del rango de fechas
+            const bitacoras = await Bitacora.find({
+                fechaHora: { $gte: fechaInicioDate, $lte: fechaFinDate }
+            }).populate('Aprendiz');
+    
+            // Devolver las bitácoras encontradas
+            res.status(200).json(bitacoras);
+        } catch (error) {
+            res.status(500).json({ message: error.message });
+        }
+    },
+    
     listarBitacorasPorAprendiz: async (req, res) => {
         try {
             const bitacoras = await Bitacora.find({ aprendiz: req.params.aprendiz });
@@ -101,19 +123,12 @@ export const httpBitacora = {
             res.status(500).json({ message: error.message });
         }
     },
-    listarBitacorasPorFichaFecha: async (req, res) => {
-        try {
-            const bitacoras = await Bitacora.find({ aprendiz: req.params.aprendiz, fecha: { $gte: req.params.fechaInicio, $lte: req.params.fechaFin } }).populate('Aprendiz', 'Ficha');
-            res.status(200).json(bitacoras);
-        } catch (error) {
-            res.status(500).json({ message: error.message });
-        }
-    },
+    
     aceptarBitacora: async (req, res) => {
         try {
             const bitacora = await Bitacora.findById(req.params.id);
-            if (bitacora.estado === 'pendiente' || bitacora.estado === 'rechazado' || bitacora.estado === 'con excusa') {
-                bitacora.estado = 'aceptado';
+            if (bitacora.estado === 'Pendiente' || bitacora.estado === 'No asistió' || bitacora.estado === 'Con excusa') {
+                bitacora.estado = 'Asistió';
                 await bitacora.save();
                 res.status(200).json({ message: 'Bitacora aceptada' });
             } else {
@@ -126,8 +141,8 @@ export const httpBitacora = {
     rechazarBitacora: async (req, res) => {
         try {
             const bitacora = await Bitacora.findById(req.params.id);
-            if (bitacora.estado === 'pendiente' || bitacora.estado === 'aceptado' || bitacora.estado === 'con excusa') {
-                bitacora.estado = 'rechazado';
+            if (bitacora.estado === 'Pendiente' || bitacora.estado === 'Asistió' || bitacora.estado === 'Con excusa') {
+                bitacora.estado = 'No asistió';
                 await bitacora.save();
                 res.status(200).json({ message: 'Bitacora rechazada' });
             } else {
@@ -140,8 +155,8 @@ export const httpBitacora = {
     excusarBitacora: async (req, res) => {
         try {
             const bitacora = await Bitacora.findById(req.params.id);
-            if (bitacora.estado === 'pendiente' || bitacora.estado === 'aceptado' || bitacora.estado === 'rechazado') {
-                bitacora.estado = 'con excusa';
+            if (bitacora.estado === 'Pendiente' || bitacora.estado === 'Asistió' || bitacora.estado === 'No asistió') {
+                bitacora.estado = 'Con excusa';
                 await bitacora.save();
                 res.status(200).json({ message: 'Bitacora excusada' });
             } else {

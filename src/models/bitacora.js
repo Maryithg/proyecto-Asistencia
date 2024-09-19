@@ -15,8 +15,8 @@ const BitacoraSchema = new Schema({
     },
     estado: {
         type: String,
-        enum: ['pendiente', 'aceptado', 'rechazado', 'con excusa'], 
-        default: 'pendiente'
+        enum: ['Pendiente', 'Asistió', 'No asistió', 'Con excusa'], 
+        default: 'Pendiente'
     }
 }, { timestamps: true });
 

@@ -12,6 +12,10 @@ router.post('/crear', [
     validarCampos
 ], httpBitacora.crearBitacora);
 
+// Listar bitácoras por ficha y fecha
+router.get('/listarPorFichaFecha/:ficha/:fechaInicio', [
+], httpBitacora.listarBitacorasPorFichaFecha);
+
 // Listar todas las bitácoras
 router.get('/listar',
     httpBitacora.listarBitacoras);
@@ -47,13 +51,7 @@ router.get('/listarPorFicha/:aprendiz', [
     validarCampos
 ], httpBitacora.listarBitacorasPorFicha);
 
-// Listar bitácoras por ficha y fecha
-router.get('/listarPorFichaFecha/:ficha/:fecha', [
-    validarJWT,
-    check('ficha').notEmpty().withMessage('El ID de la ficha es obligatorio'),
-    check('fecha').notEmpty().withMessage('La fecha es obligatoria'),
-    validarCampos
-], httpBitacora.listarBitacorasPorFichaFecha);
+
 
 // Aceptar una bitácora
 router.put('/aceptar/:id', [

@@ -19,7 +19,7 @@ export const httpAprendices = {
                 return res.status(400).json({ msg: 'El código de la ficha es obligatorio' });
             }
     
-            // Buscar la ficha por el código
+            // Buscar la ficha correspondiente por su código
             const ficha = await Ficha.findOne({ codigo: Fichas });
             
             if (!ficha) {

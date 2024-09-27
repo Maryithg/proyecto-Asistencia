@@ -8,7 +8,7 @@ import { validarJWT } from '../middlewares/validarJWT.js';
 
 const router = Router();
 
-router.get('/listar',
+router.get('/lis        tar',
     validarJWT,
     httpAprendices.listarAprendices);
 

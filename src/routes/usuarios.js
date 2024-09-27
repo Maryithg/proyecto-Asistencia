@@ -11,6 +11,7 @@ router.get('/listar', validarJWT,
  httpUsuarios.listarUsuarios);
 
 router.post('/insertarU', [
+    validarJWT,
     check('nombre').notEmpty().withMessage('El nombre es obligatorio'),
     check('email').isEmail().withMessage('El email es obligatorio y debe ser válido'),
     check('password').notEmpty().withMessage('La contraseña es obligatoria'),

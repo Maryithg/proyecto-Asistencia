@@ -7,7 +7,7 @@ import { validarJWT } from '../middlewares/validarJWT.js';
 
 const router = Router();
 
-router.get('/listar', //validarJWT, 
+router.get('/listar', validarJWT, 
 httpFichas.listarFichas);
 
 router.post('/insertar', [

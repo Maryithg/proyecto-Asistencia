@@ -14,10 +14,12 @@ router.post('/crear', [
 
 // Listar bitácoras por ficha y fecha
 router.get('/listarPorFichaFecha/:ficha/:fechaInicio', [
+    validarJWT,
 ], httpBitacora.listarBitacorasPorFichaFecha);
 
 // Listar todas las bitácoras
 router.get('/listar',
+    validarJWT,
     httpBitacora.listarBitacoras);
 
 // Listar bitácoras por fecha
